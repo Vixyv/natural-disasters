@@ -1,4 +1,4 @@
-// Data structure
+// Data structure and querying
 enum Subgroup {
     Biological,
     Climatological,
@@ -145,44 +145,90 @@ function file_change(event: Event) {
     reader.readAsText(data);
 }
 
-function ready() {
-    svg_init()
+function country_info(country: string) {
 
-    let csv_file = <HTMLInputElement>document.getElementById("csv");
-    csv_file.addEventListener("change", file_change)
 }
 
-let highlighted_countries: NodeListOf<HTMLElement>;
+// SVG
+
+let highlighted_country: NodeListOf<HTMLElement>;
+let active_country: NodeListOf<HTMLElement>;
 
 function svg_init() {
     document.querySelectorAll(".all_paths").forEach((element) => {
         element.setAttribute("id", element.id.replace(/ /g, "_"));
         element.addEventListener("mouseover", function() {
-            // window.onmousemove = function (event) {
-            //     // Moves around a "name" element which hovers above the mose
-            //     // x = j.clientX
-            //     // y = j.clientY
-            //     // document.getElementById("name").style.top = y-60  + 'px'
-            //     // document.getElementById("name").style.left = x +10 + 'px'
-            // }
+            let new_highlighted_country = <NodeListOf<HTMLElement>>document.querySelectorAll(`#${element.id}`);
 
-            let new_highlighted_countries = <NodeListOf<HTMLElement>>document.querySelectorAll(`#${element.id}`);
-            console.log(new_highlighted_countries);
-            if (new_highlighted_countries != highlighted_countries) {
-                if (highlighted_countries != undefined) {
-                    highlighted_countries.forEach(country => {
-                        country.style.fill = "#ececec";
-                    })
-                }
-                new_highlighted_countries.forEach(country => {
-                    country.style.fill = "pink";
+            if (highlighted_country != undefined) {                
+                highlighted_country.forEach(country => {
+                    country.style.fill = "#ececec";
                 })
+            }
 
-                highlighted_countries = new_highlighted_countries;
+            console.log(highlighted_country);
+            console.log(active_country);
+            
+            new_highlighted_country.forEach(country => {
+                country.style.fill = "#ffbdc0";
+            })
+
+            highlighted_country = new_highlighted_country;
+
+            // A bit of a work around but it works fine
+            if (active_country != undefined) {
+                active_country.forEach(country => {
+                    country.style.fill = "#fa6b73";
+                })
             }
         })
 
-        element.addEventListener("click", function() { // What to do on click
+        element.addEventListener("click", function() {
+            if (active_country != undefined) {
+                active_country.forEach(country => {
+                    country.style.fill = "#ececec";
+                })
+            }
+
+            active_country = <NodeListOf<HTMLElement>>document.querySelectorAll(`#${element.id}`);
+            active_country.forEach(country => {
+                    country.style.fill = "#fa6b73";
+            })
+
+            country_info(element.id)
         })
     })
 }
+
+let svg: HTMLOrSVGImageElement;
+
+function ready() {
+    svg_init()
+
+    let csv_file = <HTMLInputElement>document.getElementById("csv");
+    csv_file.addEventListener("change", file_change)
+
+    svg = <HTMLOrSVGImageElement>document.getElementById("svg");
+      
+    const zoom_in_btn = <HTMLButtonElement>document.getElementById("zoom_in");
+    const zoom_out_btn = <HTMLButtonElement>document.getElementById("zoom_out");
+      
+    zoom_in_btn.addEventListener("click", () => {
+        resize(1.1);
+    });
+      
+    zoom_out_btn.addEventListener("click", () => {
+        resize(0.9);
+    });
+      
+
+}
+
+// WORK IN PROGRESS
+function resize(scale: number) {
+    console.log(svg.height)
+    svg.setAttribute("height", `${(<number>svg.height * scale)}`);
+    svg.setAttribute("width", `${(<number>svg.width * scale)}`);  
+}
+
+
