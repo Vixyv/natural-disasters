@@ -9,11 +9,17 @@ button {
     width: 80px;
 }
 
+#country_info {
+	position: fixed;
+  	top: 5vh;
+}
+
 #svg_container {
-    height: 748px;
-    width: 1760px;
-    position: relative;
-    padding: 10px;
+    height: 54.4vh;
+    width: 64vw;
+
+    position: fixed;
+    top: 30vh;
 
     border: 3px solid rgb(0, 0, 0);
 }

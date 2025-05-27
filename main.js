@@ -2,12 +2,12 @@
 // Data structure and querying
 var Subgroup;
 (function (Subgroup) {
-    Subgroup[Subgroup["Biological"] = 0] = "Biological";
-    Subgroup[Subgroup["Climatological"] = 1] = "Climatological";
-    Subgroup[Subgroup["Extra_terrestrial"] = 2] = "Extra_terrestrial";
-    Subgroup[Subgroup["Geophysical"] = 3] = "Geophysical";
-    Subgroup[Subgroup["Hydrological"] = 4] = "Hydrological";
-    Subgroup[Subgroup["Meteorological"] = 5] = "Meteorological";
+    Subgroup["Biological"] = "Biological";
+    Subgroup["Climatological"] = "Climatological";
+    Subgroup["Extra_terrestrial"] = "Extra Terrestrial";
+    Subgroup["Geophysical"] = "Geophysical";
+    Subgroup["Hydrological"] = "Hydrological";
+    Subgroup["Meteorological"] = "Meteorological";
 })(Subgroup || (Subgroup = {}));
 let classif_to_subgroup = {
     "bio": Subgroup.Biological,
@@ -19,21 +19,21 @@ let classif_to_subgroup = {
 };
 var Type;
 (function (Type) {
-    Type[Type["Animal_incident"] = 0] = "Animal_incident";
-    Type[Type["Epidemic"] = 1] = "Epidemic";
-    Type[Type["Infestation"] = 2] = "Infestation";
-    Type[Type["Drought"] = 3] = "Drought";
-    Type[Type["Glacial_lake_outburst_flood"] = 4] = "Glacial_lake_outburst_flood";
-    Type[Type["Wildfire"] = 5] = "Wildfire";
-    Type[Type["Impact"] = 6] = "Impact";
-    Type[Type["Space_weather"] = 7] = "Space_weather";
-    Type[Type["Earthquake"] = 8] = "Earthquake";
-    Type[Type["Mass_movement_dry"] = 9] = "Mass_movement_dry";
-    Type[Type["Volcanic_activity"] = 10] = "Volcanic_activity";
-    Type[Type["Flood"] = 11] = "Flood";
-    Type[Type["Mass_movement_wet"] = 12] = "Mass_movement_wet";
-    Type[Type["Wave_action"] = 13] = "Wave_action";
-    Type[Type["Extreme_temperature"] = 14] = "Extreme_temperature";
+    Type["Animal_incident"] = "Animal Incident";
+    Type["Epidemic"] = "Epidemic";
+    Type["Infestation"] = "Infestation";
+    Type["Drought"] = "Drought";
+    Type["Glacial_lake_outburst_flood"] = "Glacial Lake Outburst Flood";
+    Type["Wildfire"] = "Wildfire";
+    Type["Impact"] = "Impact";
+    Type["Space_weather"] = "Space_weather";
+    Type["Earthquake"] = "Earthquake";
+    Type["Mass_movement_dry"] = "Mass Movement Dry";
+    Type["Volcanic_activity"] = "Volcanic Activity";
+    Type["Flood"] = "Flood";
+    Type["Mass_movement_wet"] = "Mass Movement Wet";
+    Type["Wave_action"] = "Wave Action";
+    Type["Extreme_temperature"] = "Extreme Temperature";
 })(Type || (Type = {}));
 let classif_to_type = {
     "ani": Type.Animal_incident,
@@ -111,7 +111,75 @@ function file_change(event) {
     };
     reader.readAsText(data);
 }
-function country_info(country) {
+function country_info(country_name) {
+    country_name = country_name.replace(/_/g, " ");
+    let info_box = document.getElementById("country_info");
+    let subgroup_disasters = [];
+    let type_disasters = [];
+    for (let disaster = 0; disaster < disasters.length; disaster++) {
+        if (disasters[disaster].country == country_name) {
+            count_subgroup_disasters(disasters[disaster], subgroup_disasters);
+            count_type_disasters(disasters[disaster], type_disasters);
+        }
+    }
+    let country = {
+        name: country_name,
+        subgroup_disasters: subgroup_disasters,
+        type_disasters: type_disasters,
+    };
+    let info_text = country.name + "<br\>  ";
+    for (let subgroup = 0; subgroup < subgroup_disasters.length; subgroup++) {
+        info_text += subgroup_disasters[subgroup].subgroup.toString() + ": ";
+        info_text += subgroup_disasters[subgroup].amount.toString() + "<br\>  ";
+    }
+    info_box.innerHTML = info_text;
+}
+// Counts the number of disasters by subgroup
+function count_subgroup_disasters(disaster, subgroup_disasters) {
+    if (subgroup_disasters.length == 0) {
+        let subgroup_count = {
+            subgroup: disaster.subgroup,
+            amount: 1,
+        };
+        subgroup_disasters.push(subgroup_count);
+    }
+    for (let subgroup = 0; subgroup < subgroup_disasters.length; subgroup++) {
+        if (disaster.subgroup.toString() == subgroup_disasters[subgroup].subgroup.toString()) {
+            subgroup_disasters[subgroup].amount++;
+            break;
+        }
+        else if (subgroup == subgroup_disasters.length - 1) {
+            console.log("     New group");
+            let subgroup_count = {
+                subgroup: disaster.subgroup,
+                amount: 1,
+            };
+            subgroup_disasters.push(subgroup_count);
+        }
+    }
+}
+// Counts the number of disasters by type
+function count_type_disasters(disaster, type_disasters) {
+    if (type_disasters.length == 0) {
+        let type_count = {
+            type: disaster.type,
+            amount: 1,
+        };
+        type_disasters.push(type_count);
+    }
+    for (let type = 0; type < type_disasters.length; type++) {
+        if (disaster.type == type_disasters[type].type) {
+            type_disasters[type].amount++;
+            break;
+        }
+        else if (type == type_disasters.length - 1) {
+            let type_count = {
+                type: disaster.type,
+                amount: 1,
+            };
+            type_disasters.push(type_count);
+        }
+    }
 }
 // SVG
 let highlighted_country;
@@ -126,8 +194,6 @@ function svg_init() {
                     country.style.fill = "#ececec";
                 });
             }
-            console.log(highlighted_country);
-            console.log(active_country);
             new_highlighted_country.forEach(country => {
                 country.style.fill = "#ffbdc0";
             });
@@ -170,7 +236,6 @@ function ready() {
 }
 // WORK IN PROGRESS
 function resize(scale) {
-    console.log(svg.height);
     svg.setAttribute("height", `${(svg.height * scale)}`);
     svg.setAttribute("width", `${(svg.width * scale)}`);
 }

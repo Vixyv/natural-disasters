@@ -1,11 +1,16 @@
 // Data structure and querying
 enum Subgroup {
-    Biological,
-    Climatological,
-    Extra_terrestrial,
-    Geophysical,
-    Hydrological,
-    Meteorological,
+    Biological = "Biological",
+    Climatological = "Climatological",
+    Extra_terrestrial = "Extra Terrestrial",
+    Geophysical = "Geophysical",
+    Hydrological = "Hydrological",
+    Meteorological = "Meteorological",
+}
+
+type SubgroupCount = {
+    subgroup: Subgroup,
+    amount: number,
 }
 
 let classif_to_subgroup: {[id: string]: Subgroup} = {
@@ -18,21 +23,26 @@ let classif_to_subgroup: {[id: string]: Subgroup} = {
 }
 
 enum Type {
-    Animal_incident,             // Biological
-    Epidemic,
-    Infestation,
-    Drought,                     // Climatological
-    Glacial_lake_outburst_flood,
-    Wildfire,
-    Impact,                      // Extra-terrestrial
-    Space_weather, // Never occurred
-    Earthquake,                  // Geophysical
-    Mass_movement_dry,
-    Volcanic_activity,
-    Flood,                       // Hydrological
-    Mass_movement_wet,
-    Wave_action, // Never occurred
-    Extreme_temperature,         // Meteorological
+    Animal_incident = "Animal Incident",         // Biological
+    Epidemic = "Epidemic",
+    Infestation = "Infestation",
+    Drought = "Drought",                         // Climatological
+    Glacial_lake_outburst_flood = "Glacial Lake Outburst Flood",
+    Wildfire = "Wildfire",
+    Impact = "Impact",                           // Extra-terrestrial
+    Space_weather = "Space_weather",          // Never occurred
+    Earthquake = "Earthquake",                   // Geophysical
+    Mass_movement_dry = "Mass Movement Dry",
+    Volcanic_activity = "Volcanic Activity",
+    Flood = "Flood",                             // Hydrological
+    Mass_movement_wet = "Mass Movement Wet",
+    Wave_action = "Wave Action",              // Never occurred
+    Extreme_temperature = "Extreme Temperature", // Meteorological
+}
+
+type TypeCount = {
+    type: Type,
+    amount: number,
 }
 
 let classif_to_type: {[id: string]: Type} = {
@@ -145,8 +155,98 @@ function file_change(event: Event) {
     reader.readAsText(data);
 }
 
-function country_info(country: string) {
+type Country = {
+    name: string,
 
+    subgroup_disasters: SubgroupCount[],
+    type_disasters: TypeCount[],
+}
+
+function country_info(country_name: string) {
+    country_name = country_name.replace(/_/g, " ");
+
+    let info_box = <HTMLElement>document.getElementById("country_info");
+
+    let subgroup_disasters: SubgroupCount[] = [];
+    let type_disasters: TypeCount[] = [];
+
+    for (let disaster = 0; disaster<disasters.length; disaster++) {
+        if (disasters[disaster].country == country_name) {
+            count_subgroup_disasters(disasters[disaster], subgroup_disasters)
+            count_type_disasters(disasters[disaster], type_disasters)
+        }
+    }
+
+    let country: Country = {
+        name: country_name,
+
+        subgroup_disasters: subgroup_disasters,
+        type_disasters: type_disasters,
+    };
+
+    let info_text = country.name + "<br\>  ";
+
+    for (let subgroup = 0; subgroup<subgroup_disasters.length; subgroup++) {
+        info_text += subgroup_disasters[subgroup].subgroup.toString() + ": ";
+        info_text += subgroup_disasters[subgroup].amount.toString() + "<br\>  ";
+    }
+    
+    info_box.innerHTML = info_text;
+}
+
+// Counts the number of disasters by subgroup
+function count_subgroup_disasters(disaster: NatDisaster, subgroup_disasters: SubgroupCount[]) {
+    if (subgroup_disasters.length == 0) {
+        let subgroup_count: SubgroupCount = {
+            subgroup: disaster.subgroup,
+            amount: 1,
+        }
+        
+        subgroup_disasters.push(subgroup_count);
+    }
+    
+    for (let subgroup = 0; subgroup<subgroup_disasters.length; subgroup++) {
+        if (disaster.subgroup.toString() == subgroup_disasters[subgroup].subgroup.toString()) {
+            subgroup_disasters[subgroup].amount++;
+            break;
+        }
+        else if (subgroup == subgroup_disasters.length - 1) {
+            console.log("     New group")
+            let subgroup_count: SubgroupCount = {
+                subgroup: disaster.subgroup,
+                amount: 1,
+            }
+            
+            subgroup_disasters.push(subgroup_count);
+        }
+    }
+}
+
+// Counts the number of disasters by type
+function count_type_disasters(disaster: NatDisaster, type_disasters: TypeCount[]) {
+    if (type_disasters.length == 0) {
+        let type_count: TypeCount = {
+            type: disaster.type,
+            amount: 1,
+        }
+        
+        type_disasters.push(type_count);
+    }
+    
+    for (let type = 0; type<type_disasters.length; type++) {
+        if (disaster.type == type_disasters[type].type) {
+            type_disasters[type].amount++;
+            break;
+        }
+        else if (type == type_disasters.length - 1) {
+            let type_count: TypeCount = {
+                type: disaster.type,
+                amount: 1,
+            }
+            
+            type_disasters.push(type_count);
+        }
+    }
 }
 
 // SVG
@@ -165,9 +265,6 @@ function svg_init() {
                     country.style.fill = "#ececec";
                 })
             }
-
-            console.log(highlighted_country);
-            console.log(active_country);
             
             new_highlighted_country.forEach(country => {
                 country.style.fill = "#ffbdc0";
@@ -226,7 +323,6 @@ function ready() {
 
 // WORK IN PROGRESS
 function resize(scale: number) {
-    console.log(svg.height)
     svg.setAttribute("height", `${(<number>svg.height * scale)}`);
     svg.setAttribute("width", `${(<number>svg.width * scale)}`);  
 }
