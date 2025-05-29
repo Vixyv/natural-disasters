@@ -1,5 +1,10 @@
 "use strict";
-// Data structure and querying
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const auto_1 = __importDefault(require("chart.js/auto"));
+// Data structure
 var Subgroup;
 (function (Subgroup) {
     Subgroup["Biological"] = "Biological";
@@ -91,8 +96,6 @@ function parse_data(data) {
         };
         disasters.push(disaster);
     }
-    console.log(disasters.length);
-    console.log("finished parsing");
 }
 function file_change(event) {
     let file = event.target;
@@ -105,34 +108,112 @@ function file_change(event) {
     const reader = new FileReader();
     reader.onload = () => {
         parse_data(reader.result);
+        let file_input_div = document.getElementById("file_input");
+        file_input_div.style.display = "none";
     };
     reader.onerror = () => {
         console.log("Error reading the file. Please try again.");
     };
     reader.readAsText(data);
 }
+let current_country = {
+    name: "",
+    disasters: [],
+};
+const country_info_div = document.getElementById("country_info");
+const country_name_div = document.getElementById("country_name");
 function country_info(country_name) {
     country_name = country_name.replace(/_/g, " ");
-    let info_box = document.getElementById("country_info");
-    let subgroup_disasters = [];
-    let type_disasters = [];
+    let country_disasters = [];
     for (let disaster = 0; disaster < disasters.length; disaster++) {
         if (disasters[disaster].country == country_name) {
-            count_subgroup_disasters(disasters[disaster], subgroup_disasters);
-            count_type_disasters(disasters[disaster], type_disasters);
+            country_disasters.push(disasters[disaster]);
         }
     }
-    let country = {
+    current_country = {
         name: country_name,
-        subgroup_disasters: subgroup_disasters,
-        type_disasters: type_disasters,
+        disasters: country_disasters,
     };
-    let info_text = country.name + "<br\>  ";
-    for (let subgroup = 0; subgroup < subgroup_disasters.length; subgroup++) {
-        info_text += subgroup_disasters[subgroup].subgroup.toString() + ": ";
-        info_text += subgroup_disasters[subgroup].amount.toString() + "<br\>  ";
+    country_info_div.style.display = "block";
+    country_name_div.innerHTML = country_name;
+    line_graph();
+    subgroup_pie_chart();
+}
+const line_graph_can = document.getElementById("line_graph");
+function line_graph() {
+    let year_range = get_year_range();
+    let labels = [];
+    for (let year = year_range.min; year <= year_range.max; year++) {
+        labels.push(year);
     }
-    info_box.innerHTML = info_text;
+    console.log(year_range);
+    let bio_disasters = count_disasters_subgroup(Subgroup.Biological, year_range, current_country.disasters);
+    let cli_disasters = count_disasters_subgroup(Subgroup.Climatological, year_range, current_country.disasters);
+    let ext_disasters = count_disasters_subgroup(Subgroup.Extra_terrestrial, year_range, current_country.disasters);
+    let geo_disasters = count_disasters_subgroup(Subgroup.Geophysical, year_range, current_country.disasters);
+    let hyd_disasters = count_disasters_subgroup(Subgroup.Hydrological, year_range, current_country.disasters);
+    let met_disasters = count_disasters_subgroup(Subgroup.Meteorological, year_range, current_country.disasters);
+    console.log("thing before (charts)");
+    console.log(bio_disasters);
+    const line_chart = new auto_1.default("line_chart", {
+        type: "line",
+        data: { labels: labels, datasets: [
+                { data: bio_disasters, borderColor: "yellow", fill: false },
+                { data: cli_disasters, borderColor: "grey", fill: false },
+                { data: ext_disasters, borderColor: "purple", fill: false },
+                { data: geo_disasters, borderColor: "brown", fill: false },
+                { data: hyd_disasters, borderColor: "blue", fill: false },
+                { data: met_disasters, borderColor: "red", fill: false }
+            ] },
+        // options: {
+        //     legend: {display: true},
+        //     scales: {yAxes: [{ticks: {beginAtZero: true}}]},
+        //     title: {display: true, text: "Exports by Country ($ million)"}
+        // }
+    });
+    console.log("thing ran (charts)");
+}
+function subgroup_pie_chart() {
+}
+function type_pie_chart() {
+}
+function probability_of_disaster() {
+}
+// Tool Functions
+const min_year_input = document.getElementById("min_year");
+const max_year_input = document.getElementById("min_year");
+function get_year_range() {
+    return { min: parseInt(min_year_input.value), max: parseInt(max_year_input.value) };
+}
+function within_year_range(year, year_range) {
+    if (year >= year_range.min && year <= year_range.max) {
+        return true;
+    }
+    return false;
+}
+function count_disasters_subgroup(subgroup, year_range, country_disasters) {
+    let count = [];
+    for (let year = year_range.min; year <= year_range.max; year++) {
+        count.push(0);
+    }
+    for (let d = 0; d < country_disasters.length; d++) {
+        if (country_disasters[d].subgroup == subgroup && within_year_range(country_disasters[d].start.getFullYear(), year_range)) {
+            count[(country_disasters[d].start.getFullYear() - year_range.min)]++;
+        }
+    }
+    return count;
+}
+function count_disasters_type(type, year_range, country_disasters) {
+    let count = [];
+    for (let year = year_range.min; year <= year_range.max; year++) {
+        count.push(0);
+    }
+    for (let d = 0; d < country_disasters.length; d++) {
+        if (country_disasters[d].type == type && within_year_range(country_disasters[d].start.getFullYear(), year_range)) {
+            count[(country_disasters[d].start.getFullYear() - year_range.min)]++;
+        }
+    }
+    return count;
 }
 // Counts the number of disasters by subgroup
 function count_subgroup_disasters(disaster, subgroup_disasters) {
@@ -158,30 +239,7 @@ function count_subgroup_disasters(disaster, subgroup_disasters) {
         }
     }
 }
-// Counts the number of disasters by type
-function count_type_disasters(disaster, type_disasters) {
-    if (type_disasters.length == 0) {
-        let type_count = {
-            type: disaster.type,
-            amount: 1,
-        };
-        type_disasters.push(type_count);
-    }
-    for (let type = 0; type < type_disasters.length; type++) {
-        if (disaster.type == type_disasters[type].type) {
-            type_disasters[type].amount++;
-            break;
-        }
-        else if (type == type_disasters.length - 1) {
-            let type_count = {
-                type: disaster.type,
-                amount: 1,
-            };
-            type_disasters.push(type_count);
-        }
-    }
-}
-// SVG
+// Init functions
 let highlighted_country;
 let active_country;
 function svg_init() {
@@ -234,8 +292,11 @@ function ready() {
         resize(0.9);
     });
 }
-// WORK IN PROGRESS
+// TODO
 function resize(scale) {
     svg.setAttribute("height", `${(svg.height * scale)}`);
     svg.setAttribute("width", `${(svg.width * scale)}`);
 }
+// Chart of disasters by subgroup over year range
+// Chart of diasters by subgroup or by type during a year
+// Probability of encountering any disaster or a disaster during a year or year range a day

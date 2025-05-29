@@ -1,4 +1,6 @@
-// Data structure and querying
+import Chart from "chart.js/auto";
+
+// Data structure
 enum Subgroup {
     Biological = "Biological",
     Climatological = "Climatological",
@@ -129,9 +131,6 @@ function parse_data(data: string) {
 
         disasters.push(disaster);
     }
-
-    console.log(disasters.length);
-    console.log("finished parsing")
 }
 
 function file_change(event: Event) {
@@ -148,6 +147,9 @@ function file_change(event: Event) {
     const reader = new FileReader();
     reader.onload = () => {
         parse_data(<string>reader.result)
+
+        let file_input_div = <HTMLElement>document.getElementById("file_input");
+        file_input_div.style.display = "none";
     };
     reader.onerror = () => {
         console.log("Error reading the file. Please try again.");
@@ -157,41 +159,137 @@ function file_change(event: Event) {
 
 type Country = {
     name: string,
-
-    subgroup_disasters: SubgroupCount[],
-    type_disasters: TypeCount[],
+    disasters: NatDisaster[];
 }
+
+let current_country: Country = {
+    name: "",
+    disasters: [],
+}
+
+const country_info_div = <HTMLElement>document.getElementById("country_info");
+const country_name_div = <HTMLElement>document.getElementById("country_name");
 
 function country_info(country_name: string) {
     country_name = country_name.replace(/_/g, " ");
+    let country_disasters: NatDisaster[] = [];
 
-    let info_box = <HTMLElement>document.getElementById("country_info");
-
-    let subgroup_disasters: SubgroupCount[] = [];
-    let type_disasters: TypeCount[] = [];
-
-    for (let disaster = 0; disaster<disasters.length; disaster++) {
+    for (let disaster=0; disaster<disasters.length; disaster++) {
         if (disasters[disaster].country == country_name) {
-            count_subgroup_disasters(disasters[disaster], subgroup_disasters)
-            count_type_disasters(disasters[disaster], type_disasters)
+            country_disasters.push(disasters[disaster])
         }
     }
 
-    let country: Country = {
+    current_country = {
         name: country_name,
-
-        subgroup_disasters: subgroup_disasters,
-        type_disasters: type_disasters,
-    };
-
-    let info_text = country.name + "<br\>  ";
-
-    for (let subgroup = 0; subgroup<subgroup_disasters.length; subgroup++) {
-        info_text += subgroup_disasters[subgroup].subgroup.toString() + ": ";
-        info_text += subgroup_disasters[subgroup].amount.toString() + "<br\>  ";
+        disasters: country_disasters,
     }
+
+    country_info_div.style.display = "block";
+    country_name_div.innerHTML = country_name;
+
+    line_graph()
+    subgroup_pie_chart()
+}
+
+const line_graph_can = <HTMLCanvasElement>document.getElementById("line_graph");
+
+function line_graph() {
+    let year_range = get_year_range();
+
+    let labels = [];
+    for (let year=year_range.min; year<=year_range.max; year++) {
+        labels.push(year);
+    }
+
+    console.log(year_range)
+
+    let bio_disasters = count_disasters_subgroup(Subgroup.Biological, year_range, current_country.disasters);
+    let cli_disasters = count_disasters_subgroup(Subgroup.Climatological, year_range, current_country.disasters);
+    let ext_disasters = count_disasters_subgroup(Subgroup.Extra_terrestrial, year_range, current_country.disasters);
+    let geo_disasters = count_disasters_subgroup(Subgroup.Geophysical, year_range, current_country.disasters);
+    let hyd_disasters = count_disasters_subgroup(Subgroup.Hydrological, year_range, current_country.disasters);
+    let met_disasters = count_disasters_subgroup(Subgroup.Meteorological, year_range, current_country.disasters);
+
+    console.log("thing before (charts)")
+    console.log(bio_disasters);
+
+    const line_chart = new Chart("line_chart", {
+        type: "line",
+        data: {labels: labels, datasets: [
+            {data: bio_disasters, borderColor: "yellow", fill:false},
+            {data: cli_disasters, borderColor: "grey", fill:false},
+            {data: ext_disasters, borderColor: "purple", fill:false},
+            {data: geo_disasters, borderColor: "brown", fill:false},
+            {data: hyd_disasters, borderColor: "blue", fill:false},
+            {data: met_disasters, borderColor: "red", fill:false}
+        ]},
+        // options: {
+        //     legend: {display: true},
+        //     scales: {yAxes: [{ticks: {beginAtZero: true}}]},
+        //     title: {display: true, text: "Exports by Country ($ million)"}
+        // }
+    });
+
+    console.log("thing ran (charts)")
+}
+
+function subgroup_pie_chart() {
+
+}
+
+function type_pie_chart() {
+
+}
+
+function probability_of_disaster() {
+
+}
+
+// Tool Functions
+const min_year_input = <HTMLInputElement>document.getElementById("min_year");
+const max_year_input = <HTMLInputElement>document.getElementById("min_year");
+
+type YearRange = {
+    min: number;
+    max: number;
+}
+
+function get_year_range() : YearRange {
+    return {min: parseInt(min_year_input.value), max: parseInt(max_year_input.value)}
+}
+
+function within_year_range(year: number, year_range: YearRange) : boolean {
+    if (year >= year_range.min && year <= year_range.max) {
+        return true
+    }
+    return false
+}
+
+function count_disasters_subgroup(subgroup: Subgroup, year_range: YearRange, country_disasters: NatDisaster[]) : number[] { 
+    let count = [];
+    for (let year=year_range.min; year<=year_range.max; year++) { count.push(0); }
     
-    info_box.innerHTML = info_text;
+    for (let d=0; d<country_disasters.length; d++) {
+        if (country_disasters[d].subgroup == subgroup && within_year_range(country_disasters[d].start.getFullYear(), year_range)) {
+            count[(country_disasters[d].start.getFullYear()-year_range.min)]++;
+        }
+    }
+
+    return count
+}
+
+function count_disasters_type(type: Type, year_range: YearRange, country_disasters: NatDisaster[]) : number[] {
+    let count = [];
+    for (let year=year_range.min; year<=year_range.max; year++) { count.push(0); }
+    
+    for (let d=0; d<country_disasters.length; d++) {
+        if (country_disasters[d].type == type && within_year_range(country_disasters[d].start.getFullYear(), year_range)) {
+            count[(country_disasters[d].start.getFullYear()-year_range.min)]++;
+        }
+    }
+
+    return count
 }
 
 // Counts the number of disasters by subgroup
@@ -222,35 +320,8 @@ function count_subgroup_disasters(disaster: NatDisaster, subgroup_disasters: Sub
     }
 }
 
-// Counts the number of disasters by type
-function count_type_disasters(disaster: NatDisaster, type_disasters: TypeCount[]) {
-    if (type_disasters.length == 0) {
-        let type_count: TypeCount = {
-            type: disaster.type,
-            amount: 1,
-        }
-        
-        type_disasters.push(type_count);
-    }
-    
-    for (let type = 0; type<type_disasters.length; type++) {
-        if (disaster.type == type_disasters[type].type) {
-            type_disasters[type].amount++;
-            break;
-        }
-        else if (type == type_disasters.length - 1) {
-            let type_count: TypeCount = {
-                type: disaster.type,
-                amount: 1,
-            }
-            
-            type_disasters.push(type_count);
-        }
-    }
-}
 
-// SVG
-
+// Init functions
 let highlighted_country: NodeListOf<HTMLElement>;
 let active_country: NodeListOf<HTMLElement>;
 
@@ -317,14 +388,14 @@ function ready() {
     zoom_out_btn.addEventListener("click", () => {
         resize(0.9);
     });
-      
-
 }
 
-// WORK IN PROGRESS
+// TODO
 function resize(scale: number) {
     svg.setAttribute("height", `${(<number>svg.height * scale)}`);
     svg.setAttribute("width", `${(<number>svg.width * scale)}`);  
 }
 
-
+// Chart of disasters by subgroup over year range
+// Chart of diasters by subgroup or by type during a year
+// Probability of encountering any disaster or a disaster during a year or year range a day
