@@ -254,7 +254,7 @@ function probability_of_disaster() {
 
 // Tool Functions
 const min_year_input = <HTMLInputElement>document.getElementById("min_year");
-const max_year_input = <HTMLInputElement>document.getElementById("min_year");
+const max_year_input = <HTMLInputElement>document.getElementById("max_year");
 
 type YearRange = {
     min: number;
