@@ -1,9 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+// import {Chart} from "c:/Files/Programming/CS30/natural-disasters/node_modules/chart.js";
 Object.defineProperty(exports, "__esModule", { value: true });
-const auto_1 = __importDefault(require("chart.js/auto"));
+// export * from 'c:/Files/Programming/CS30/natural-disasters/node_modules/chart.js/dist/types.js';
+// export default Chart;
+// import { Chart } from "chart.js";
 // Data structure
 var Subgroup;
 (function (Subgroup) {
@@ -155,7 +155,8 @@ function line_graph() {
     let met_disasters = count_disasters_subgroup(Subgroup.Meteorological, year_range, current_country.disasters);
     console.log("thing before (charts)");
     console.log(bio_disasters);
-    const line_chart = new auto_1.default("line_chart", {
+    // @ts-ignore
+    const line_chart = new Chart("line_chart", {
         type: "line",
         data: { labels: labels, datasets: [
                 { data: bio_disasters, borderColor: "yellow", fill: false },
@@ -290,6 +291,23 @@ function ready() {
     });
     zoom_out_btn.addEventListener("click", () => {
         resize(0.9);
+    });
+    // This stuff not working
+    min_year_input.addEventListener("change", () => {
+        if (parseInt(min_year_input.value) > parseInt(max_year_input.value)) {
+            min_year_input.value = max_year_input.value;
+            console.log("is greater");
+        }
+        console.log(parseInt(min_year_input.value) > parseInt(max_year_input.value));
+        console.log([parseInt(min_year_input.value), parseInt(max_year_input.value)]);
+    });
+    max_year_input.addEventListener("change", () => {
+        if (parseInt(max_year_input.value) < parseInt(min_year_input.value)) {
+            max_year_input.value = min_year_input.value;
+        }
+    });
+    max_year_input.addEventListener("onload", () => {
+        max_year_input.value = "2025";
     });
 }
 // TODO

@@ -1,4 +1,9 @@
-import Chart from "chart.js/auto";
+// import {Chart} from "c:/Files/Programming/CS30/natural-disasters/node_modules/chart.js";
+
+// export * from 'c:/Files/Programming/CS30/natural-disasters/node_modules/chart.js/dist/types.js';
+// export default Chart;
+
+// import { Chart } from "chart.js";
 
 // Data structure
 enum Subgroup {
@@ -214,6 +219,7 @@ function line_graph() {
     console.log("thing before (charts)")
     console.log(bio_disasters);
 
+    // @ts-ignore
     const line_chart = new Chart("line_chart", {
         type: "line",
         data: {labels: labels, datasets: [
@@ -388,6 +394,27 @@ function ready() {
     zoom_out_btn.addEventListener("click", () => {
         resize(0.9);
     });
+
+    // This stuff not working
+    min_year_input.addEventListener("change", () => {
+        if (parseInt(min_year_input.value) > parseInt(max_year_input.value)) {
+            min_year_input.value = max_year_input.value;
+            console.log("is greater")
+        }
+
+        console.log(parseInt(min_year_input.value) >  parseInt(max_year_input.value))
+        console.log([parseInt(min_year_input.value), parseInt(max_year_input.value)])
+    })
+
+    max_year_input.addEventListener("change", () => {
+        if (parseInt(max_year_input.value) < parseInt(min_year_input.value)) {
+            max_year_input.value = min_year_input.value;
+        }
+    })
+
+    max_year_input.addEventListener("onload", () => {
+        max_year_input.value = "2025";
+    })
 }
 
 // TODO
